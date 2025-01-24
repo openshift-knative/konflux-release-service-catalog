@@ -59,10 +59,6 @@ spec:
     - name: taskGitRevision
       type: string
       description: The revision in the taskGitUrl repo to be used
-    - name: defaultTaskTimeout
-      type: string
-      description: Default timeout for a Task
-      default: "4h00m0s"
   workspaces:
     - name: release-workspace
   results:
@@ -71,7 +67,7 @@ spec:
       value: $(tasks.create-advisory.results.advisory_url)
   tasks:
     - name: verify-access-to-resources
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -95,7 +91,7 @@ spec:
         - name: requireInternalServices
           value: "true"
     - name: collect-data
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -124,7 +120,7 @@ spec:
       runAfter:
         - verify-access-to-resources
     - name: reduce-snapshot
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -151,7 +147,7 @@ spec:
       runAfter:
         - collect-data
     - name: extract-requester-from-release
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -179,7 +175,7 @@ spec:
       runAfter:
         - verify-access-to-resources
     - name: apply-mapping
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 3
       taskRef:
         resolver: "git"
@@ -236,7 +232,7 @@ spec:
       runAfter:
         - apply-mapping
     - name: populate-release-notes-images
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       params:
         - name: dataPath
           value: "$(tasks.collect-data.results.data)"
@@ -257,7 +253,7 @@ spec:
         - name: data
           workspace: release-workspace
     - name: embargo-check
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       params:
         - name: dataPath
           value: "$(tasks.collect-data.results.data)"
@@ -278,7 +274,7 @@ spec:
       runAfter:
         - populate-release-notes-images
     - name: collect-cosign-params
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -297,7 +293,7 @@ spec:
       runAfter:
         - collect-data
     - name: rh-sign-image-cosign
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       when:
         - input: $(tasks.collect-cosign-params.results.cosign-secret-name)
           operator: notin
@@ -326,7 +322,7 @@ spec:
         - push-snapshot
         - collect-cosign-params
     - name: push-snapshot
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 5
       when:
         - input: "$(tasks.apply-mapping.results.mapped)"
@@ -354,7 +350,7 @@ spec:
       runAfter:
         - rh-sign-image
     - name: collect-pyxis-params
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -418,7 +414,7 @@ spec:
         - publish-pyxis-repository
         - extract-requester-from-release
     - name: create-pyxis-image
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 5
       taskRef:
         resolver: "git"
@@ -446,7 +442,7 @@ spec:
       runAfter:
         - push-snapshot
     - name: publish-pyxis-repository
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 5
       taskRef:
         resolver: "git"
@@ -475,7 +471,7 @@ spec:
         - collect-pyxis-params
         - apply-mapping
     - name: push-rpm-data-to-pyxis
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 5
       taskRef:
         resolver: "git"
@@ -499,7 +495,7 @@ spec:
       runAfter:
         - create-pyxis-image
     - name: update-component-sbom
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       when:
         - input: "$(tasks.collect-atlas-params.results.secretName)"
           operator: notin
@@ -527,7 +523,7 @@ spec:
         - push-rpm-data-to-pyxis
         - populate-release-notes-images
     - name: upload-component-sbom
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       when:
         - input: "$(tasks.collect-atlas-params.results.secretName)"
           operator: notin
@@ -556,7 +552,7 @@ spec:
       runAfter:
         - update-component-sbom
     - name: run-file-updates
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       params:
         - name: fileUpdatesPath
           value: $(tasks.collect-data.results.data)
@@ -584,7 +580,7 @@ spec:
         - name: data
           workspace: release-workspace
     - name: check-data-keys
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       params:
         - name: dataPath
           value: "$(tasks.collect-data.results.data)"
@@ -611,7 +607,7 @@ spec:
       runAfter:
         - populate-release-notes-images
     - name: collect-atlas-params
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
@@ -630,7 +626,7 @@ spec:
       runAfter:
         - collect-data
     - name: create-product-sbom
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       when:
         - input: "$(tasks.collect-atlas-params.results.secretName)"
           operator: notin
@@ -654,7 +650,7 @@ spec:
         - collect-atlas-params
         - populate-release-notes-images
     - name: upload-product-sbom
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       when:
         - input: "$(tasks.collect-atlas-params.results.secretName)"
           operator: notin
@@ -683,7 +679,7 @@ spec:
       runAfter:
         - create-product-sbom
     - name: create-advisory
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       retries: 5
       params:
         - name: releasePlanAdmissionPath
@@ -716,7 +712,7 @@ spec:
         - rh-sign-image
         - rh-sign-image-cosign
     - name: update-cr-status
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       params:
         - name: resource
           value: $(params.release)
@@ -738,7 +734,7 @@ spec:
         - create-advisory
   finally:
     - name: cleanup
-      timeout: $(params.defaultTaskTimeout)
+      timeout: "4h"
       taskRef:
         resolver: "git"
         params:
